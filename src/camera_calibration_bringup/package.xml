@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>camera_calibration_bringup</name>
+  <version>0.1.0</version>
+  <description>Project-level launch and configuration for monocular and stereo camera calibration.</description>
+  <maintainer email="fzhang859@connect.hkust-gz.edu.cn">pnx</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>camera_calibration</exec_depend>
+  <exec_depend>hik_camera_driver</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>rclcpp_components</exec_depend>
+  <exec_depend>stereo_aruco_calibration</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

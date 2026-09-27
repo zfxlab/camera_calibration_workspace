@@ -1,0 +1,9 @@
+[submodule "src/hik_camera_driver"]
+	path = src/hik_camera_driver
+	url = git@github.com:zfxlab/hik_camera_driver.git
+[submodule "src/stereo_aruco_calibration"]
+	path = src/stereo_aruco_calibration
+	url = git@github.com:zfxlab/stereo_aruco_calibration.git
+[submodule "src/camera_focus_assistant"]
+	path = src/camera_focus_assistant
+	url = git@github.com:zfxlab/camera_focus_assistant.git
