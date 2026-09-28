@@ -109,7 +109,7 @@ def _launch_setup(context):
         ],
         remappings=[
             ("image", f"/{namespace}/image_raw"),
-            ("camera", f"/{namespace}"),
+            ("camera/set_camera_info", f"/{namespace}/set_camera_info"),
         ],
     )
     return [container, calibrator]
