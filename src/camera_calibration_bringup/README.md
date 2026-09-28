@@ -6,8 +6,7 @@
 ## 单目标定
 
 ```bash
-ros2 launch camera_calibration_bringup mono_calibration.launch.py \
-  camera:=left_camera board_size:=9x6 square_size:=0.025 pattern:=chessboard
+ros2 launch camera_calibration_bringup mono_calibration.launch.py
 ```
 
 `camera` 可以是启用相机的 namespace、序列号或唯一的 `camera_name`。launch 强制使用
