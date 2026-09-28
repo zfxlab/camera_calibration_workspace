@@ -7,3 +7,6 @@
 [submodule "src/camera_focus_assistant"]
 	path = src/camera_focus_assistant
 	url = git@github.com:zfxlab/camera_focus_assistant.git
+[submodule "src/mono_camera_calibration"]
+	path = src/mono_camera_calibration
+	url = git@github.com:zfxlab/mono_camera_calibration.git

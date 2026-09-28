@@ -5,6 +5,7 @@ import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
@@ -45,8 +46,7 @@ def _load_camera(cameras_file, requested_camera):
     if len(matches) != 1:
         raise RuntimeError(
             f"camera={requested_camera!r} must match exactly one enabled namespace, "
-            f"serial_number, or camera_name in {path}; found {len(matches)}"
-        )
+            f"serial_number, or camera_name in {path}; found {len(matches)}")
 
     entry = matches[0]
     namespace = entry.get("namespace", "").strip("/")
@@ -69,17 +69,61 @@ def _load_camera(cameras_file, requested_camera):
     return namespace, entry.get("node_name", "driver"), parameters
 
 
+def _parse_board_size(value):
+    parts = value.lower().split("x")
+    if len(parts) != 2:
+        raise RuntimeError("board_size must use COLUMNSxROWS format, for example 7x7")
+    try:
+        columns, rows = (int(part) for part in parts)
+    except ValueError as error:
+        raise RuntimeError("board_size must contain integer columns and rows") from error
+    if columns < 2 or rows < 2:
+        raise RuntimeError("board_size columns and rows must both be at least 2")
+    return columns, rows
+
+
 def _launch_setup(context):
     namespace, node_name, parameters = _load_camera(
         LaunchConfiguration("cameras_file").perform(context),
-        LaunchConfiguration("camera").perform(context),
-    )
-    component_parameters = {
+        LaunchConfiguration("camera").perform(context))
+    columns, rows = _parse_board_size(
+        LaunchConfiguration("board_size").perform(context))
+    driver_parameters = {
         key: ParameterValue(value, value_type=str) if key in _STRING_PARAMETERS else value
         for key, value in parameters.items()
     }
-    camera_name = parameters["camera_name"]
 
+    camera = ComposableNode(
+        package="hik_camera_driver",
+        plugin="hik_camera_driver::HikCameraNode",
+        namespace=f"/{namespace}",
+        name=node_name,
+        parameters=[driver_parameters],
+        extra_arguments=[{"use_intra_process_comms": True}],
+    )
+    calibrator = ComposableNode(
+        package="mono_camera_calibration",
+        plugin="mono_camera_calibration::MonoCalibrationNode",
+        namespace="/mono_calibration",
+        name="calibrator",
+        parameters=[
+            LaunchConfiguration("calibration_file"),
+            {
+                "image_topic": f"/{namespace}/image_raw",
+                "set_camera_info_service": f"/{namespace}/set_camera_info",
+                "camera_name": ParameterValue(parameters["camera_name"], value_type=str),
+                "board.pattern": ParameterValue(
+                    LaunchConfiguration("pattern"), value_type=str),
+                "board.columns": columns,
+                "board.rows": rows,
+                "board.square_size_m": ParameterValue(
+                    LaunchConfiguration("square_size"), value_type=float),
+                "output_path": ParameterValue(
+                    LaunchConfiguration("output_file"), value_type=str),
+            },
+        ],
+        extra_arguments=[{"use_intra_process_comms": True}],
+    )
     container = ComposableNodeContainer(
         package="rclcpp_components",
         executable="component_container_mt",
@@ -87,46 +131,37 @@ def _launch_setup(context):
         namespace="/",
         output="screen",
         emulate_tty=True,
-        composable_node_descriptions=[ComposableNode(
-            package="hik_camera_driver",
-            plugin="hik_camera_driver::HikCameraNode",
-            namespace=f"/{namespace}",
-            name=node_name,
-            parameters=[component_parameters],
-            extra_arguments=[{"use_intra_process_comms": True}],
-        )],
+        composable_node_descriptions=[camera, calibrator],
     )
-    calibrator = Node(
-        package="camera_calibration",
-        executable="cameracalibrator",
-        name="monocular_calibrator",
+    gui = Node(
+        package="mono_camera_calibration",
+        executable="mono_calibration_gui",
+        name="mono_calibration_gui",
         output="screen",
-        arguments=[
-            "--size", LaunchConfiguration("board_size"),
-            "--square", LaunchConfiguration("square_size"),
-            "--pattern", LaunchConfiguration("pattern"),
-            "--camera_name", camera_name,
-        ],
-        remappings=[
-            ("image", f"/{namespace}/image_raw"),
-            ("camera/set_camera_info", f"/{namespace}/set_camera_info"),
-        ],
+        condition=IfCondition(LaunchConfiguration("gui")),
     )
-    return [container, calibrator]
+    return [container, gui]
 
 
 def generate_launch_description():
-    share = get_package_share_directory("camera_calibration_bringup")
+    bringup_share = get_package_share_directory("camera_calibration_bringup")
+    calibration_share = get_package_share_directory("mono_camera_calibration")
     return LaunchDescription([
         DeclareLaunchArgument(
-            "cameras_file", default_value=os.path.join(share, "config", "cameras.yaml")),
+            "cameras_file",
+            default_value=os.path.join(bringup_share, "config", "cameras.yaml")),
         DeclareLaunchArgument(
-            "camera", default_value="camera",
+            "calibration_file",
+            default_value=os.path.join(calibration_share, "config", "calibration.yaml")),
+        DeclareLaunchArgument(
+            "camera", default_value="left_camera",
             description="Enabled camera namespace, serial number, or unique camera_name"),
         DeclareLaunchArgument("board_size", default_value="7x7"),
         DeclareLaunchArgument("square_size", default_value="0.03"),
         DeclareLaunchArgument(
             "pattern", default_value="circles",
-            description="chessboard, circles, acircles, or charuco"),
+            description="chessboard, circles, or acircles"),
+        DeclareLaunchArgument("output_file", default_value="/tmp/mono_camera.yaml"),
+        DeclareLaunchArgument("gui", default_value="true"),
         OpaqueFunction(function=_launch_setup),
     ])
