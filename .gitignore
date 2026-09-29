@@ -3,3 +3,4 @@ install/
 log/
 .vscode
 tmp/
+.cache
