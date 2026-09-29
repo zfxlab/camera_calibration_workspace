@@ -25,7 +25,7 @@ ros2 launch camera_calibration_bringup mono_calibration.launch.py \
 ```
 
 GUI 是独立 C++ 进程，只接收缩放后的 JPEG 预览和状态，不订阅原始图像。可通过
-`gui:=false` 关闭。
+`gui:=false` 关闭。采样、标定和显示参数位于 `config/mono_calibration.yaml`。
 
 GUI 按键：
 

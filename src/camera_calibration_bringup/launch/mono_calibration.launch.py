@@ -145,14 +145,14 @@ def _launch_setup(context):
 
 def generate_launch_description():
     bringup_share = get_package_share_directory("camera_calibration_bringup")
-    calibration_share = get_package_share_directory("mono_camera_calibration")
     return LaunchDescription([
         DeclareLaunchArgument(
             "cameras_file",
             default_value=os.path.join(bringup_share, "config", "cameras.yaml")),
         DeclareLaunchArgument(
             "calibration_file",
-            default_value=os.path.join(calibration_share, "config", "calibration.yaml")),
+            default_value=os.path.join(
+                bringup_share, "config", "mono_calibration.yaml")),
         DeclareLaunchArgument(
             "camera", default_value="left_camera",
             description="Enabled camera namespace, serial number, or unique camera_name"),
