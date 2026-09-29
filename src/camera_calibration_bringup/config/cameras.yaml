@@ -7,10 +7,10 @@ defaults:
   max_consecutive_timeouts: 5
   sdk_buffer_count: 4
   auto_exposure: false
-  exposure_time: 10000.0
+  exposure_time: 20000.0
   auto_gain: false
   gain: 0.0
-  frame_rate: 30.0
+  frame_rate: 20.0
   trigger_mode: "off"
 
 cameras:
