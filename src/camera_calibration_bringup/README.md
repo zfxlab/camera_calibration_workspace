@@ -26,12 +26,14 @@ ros2 launch camera_calibration_bringup mono_calibration.launch.py \
 
 GUI 是独立 C++ 进程，只接收缩放后的 JPEG 预览和状态，不订阅原始图像。可通过
 `gui:=false` 关闭。采样、标定和显示参数位于 `config/mono_calibration.yaml`。
+采样会检查完整点阵姿态差异、清晰度、曝光、覆盖率和边缘距离；求解会使用基于 MAD 的
+逐视图重投影误差阈值剔除异常样本并重新标定。默认至少需要 20 个有效且不同的姿态。
 
-GUI 按键：
+标定程序默认以暂停采样状态启动。先使 GUI 窗口获得键盘焦点，再使用以下按键；大小写均可：
 
 - `G`：开始采样
 - `X`：停止采样
-- `R`：重置
+- `R`：清空样本和标定结果，并暂停采样
 - `C`：求解
 - `S`：保存到 `output_file`
 - `U`：提交到相机驱动的 `set_camera_info` 服务，并写入该相机配置的
